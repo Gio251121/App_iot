@@ -1,19 +1,24 @@
 package com.example.app_iot;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.widget.Toolbar;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
     // ======= CONFIGURAZIONE BROKER =======
-    private static final String BROKER_URL = "ssl://eb42853a0afd4d9484cd4561f4a0ebf2.s1.eu.hivemq.cloud:8883";
+    private static final String BROKER_URL = "ssl://db49354fc78743c7a438062aae747e93.s1.eu.hivemq.cloud:8883";
     private static final String CLIENT_ID  = "android-client-001";
-    private static final String USERNAME   = "hivemq.webclient.1775400253585";
-    private static final String PASSWORD   = "b&1.7Kf2,?FLiHACv3qc";
+    private static final String USERNAME   = "hivemq.webclient.1775809769089";
+    private static final String PASSWORD   = "Qc>;dADFx%:49ap7TU5i";
     // =====================================
 
     private MqttManager mqttManager;
@@ -22,10 +27,18 @@ public class MainActivity extends AppCompatActivity {
     private Button btnConnect, btnPublish;
     private TextView tvStatus;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        getSupportActionBar().setTitle("");
+
 
         // Collega le views
         etTopic    = findViewById(R.id.etTopic);
@@ -109,5 +122,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mqttManager.disconnect();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -1,78 +1,190 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_marginTop="20dp">
+    android:background="#121212">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface"
-        android:elevation="2dp"
-        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+        android:background="#1E1E1E"
+        android:elevation="4dp"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark"/>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="10dp">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <Button
-                android:id="@+id/btnConnect"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Connetti"/>
-
+            <!-- Stato connessione -->
             <TextView
-                android:id="@+id/tvStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="⚪ Disconnesso"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="12dp"
-                android:background="#CCCCCC"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Topic"/>
-
-            <EditText
-                android:id="@+id/etTopic"
+                android:id="@+id/tvConnStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="casa/sensore/temperatura"
-                android:inputType="text"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Messaggio"/>
-
-            <EditText
-                android:id="@+id/etMessage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="25.3"
-                android:inputType="text"/>
+                android:text="⚪ Dispositivo offline"
+                android:textColor="#AAAAAA"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp"/>
 
             <Button
-                android:id="@+id/btnPublish"
+                android:id="@+id/btnRiprova"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Riprova"
+                android:textSize="12sp"
+                android:backgroundTint="#333333"
+                android:textColor="#AAAAAA"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"/>
+
+            <!-- Card prossima dose -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#1E1E1E"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PROSSIMA DOSE"
+                    android:textColor="#888888"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"/>
+
+                <TextView
+                    android:id="@+id/tvProssimaDose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="08:00"
+                    android:textColor="#FFFFFF"
+                    android:textSize="42sp"
+                    android:fontFamily="sans-serif-light"/>
+
+                <TextView
+                    android:id="@+id/tvProssimaDoseLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mattina — tra 6 ore"
+                    android:textColor="#888888"
+                    android:textSize="13sp"/>
+
+            </LinearLayout>
+
+            <!-- Card ultima dose -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#1E1E1E"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ULTIMA DOSE EROGATA"
+                    android:textColor="#888888"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"/>
+
+                <TextView
+                    android:id="@+id/tvUltimaDose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="— nessuna"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:layout_marginTop="4dp"/>
+
+            </LinearLayout>
+
+            <!-- Card sensori -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <!-- Temperatura -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#1E1E1E"
+                    android:padding="16dp"
+                    android:layout_marginEnd="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TEMPERATURA"
+                        android:textColor="#888888"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.1"/>
+
+                    <TextView
+                        android:id="@+id/tvTemperatura"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--°C"
+                        android:textColor="#FFFFFF"
+                        android:textSize="28sp"
+                        android:fontFamily="sans-serif-light"/>
+
+                </LinearLayout>
+
+                <!-- Umidità -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#1E1E1E"
+                    android:padding="16dp"
+                    android:layout_marginStart="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="UMIDITÀ"
+                        android:textColor="#888888"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.1"/>
+
+                    <TextView
+                        android:id="@+id/tvUmidita"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textColor="#FFFFFF"
+                        android:textSize="28sp"
+                        android:fontFamily="sans-serif-light"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Bottone prova -->
+            <Button
+                android:id="@+id/btnProva"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Pubblica Messaggio"/>
+                android:text="Modalità Prova MQTT"
+                android:backgroundTint="#333333"
+                android:textColor="#AAAAAA"/>
 
         </LinearLayout>
     </ScrollView>

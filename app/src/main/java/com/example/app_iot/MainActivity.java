@@ -1,33 +1,21 @@
 package com.example.app_iot;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
-import androidx.appcompat.widget.Toolbar;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class MainActivity extends AppCompatActivity {
 
-    // ======= CONFIGURAZIONE BROKER =======
-    private static final String BROKER_URL = "ssl://db49354fc78743c7a438062aae747e93.s1.eu.hivemq.cloud:8883";
-    private static final String CLIENT_ID  = "android-client-001";
-    private static final String USERNAME   = "hivemq.webclient.1775809769089";
-    private static final String PASSWORD   = "Qc>;dADFx%:49ap7TU5i";
-    // =====================================
-
     private MqttManager mqttManager;
-
-    private EditText etTopic, etMessage;
-    private Button btnConnect, btnPublish;
-    private TextView tvStatus;
-
-
+    private TextView tvConnStatus;
+    private Button btnRiprova;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,92 +24,65 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         getSupportActionBar().setTitle("");
 
+        tvConnStatus = findViewById(R.id.tvConnStatus);
+        btnRiprova   = findViewById(R.id.btnRiprova);
+        Button btnProva = findViewById(R.id.btnProva);
 
-        // Collega le views
-        etTopic    = findViewById(R.id.etTopic);
-        etMessage  = findViewById(R.id.etMessage);
-        btnConnect = findViewById(R.id.btnConnect);
-        btnPublish = findViewById(R.id.btnPublish);
-        tvStatus   = findViewById(R.id.tvStatus);
+        btnRiprova.setVisibility(View.GONE);
 
-        btnPublish.setEnabled(false);
         mqttManager = new MqttManager();
-
-        // Callbacks connessione
         mqttManager.setConnectionCallback(new MqttManager.ConnectionCallback() {
             @Override
             public void onSuccess() {
                 runOnUiThread(() -> {
-                    tvStatus.setText("✅ Connesso");
-                    btnConnect.setText("Disconnetti");
-                    btnPublish.setEnabled(true);
+                    tvConnStatus.setText("🟢 Dispositivo online");
+                    tvConnStatus.setTextColor(0xFF4CAF50);
+                    btnRiprova.setVisibility(View.GONE);
                 });
             }
 
             @Override
             public void onFailure(String error) {
                 runOnUiThread(() -> {
-                    tvStatus.setText("❌ Errore: " + error);
-                    btnConnect.setText("Connetti");
-                    btnPublish.setEnabled(false);
+                    tvConnStatus.setText("🔴 Connessione fallita");
+                    tvConnStatus.setTextColor(0xFFE53935);
+                    btnRiprova.setVisibility(View.VISIBLE);
                 });
             }
 
             @Override
             public void onDisconnected() {
                 runOnUiThread(() -> {
-                    tvStatus.setText("⚪ Disconnesso");
-                    btnConnect.setText("Connetti");
-                    btnPublish.setEnabled(false);
+                    tvConnStatus.setText("⚪ Dispositivo offline");
+                    tvConnStatus.setTextColor(0xFFAAAAAA);
+                    btnRiprova.setVisibility(View.VISIBLE);
                 });
             }
         });
 
-        // Bottone connetti / disconnetti
-        btnConnect.setOnClickListener(v -> {
-            if (mqttManager.isConnected()) {
-                mqttManager.disconnect();
-            } else {
-                mqttManager.connect(BROKER_URL, CLIENT_ID, USERNAME, PASSWORD);
-                tvStatus.setText("⏳ Connessione in corso...");
-            }
-        });
+        btnRiprova.setOnClickListener(v -> connetti());
 
-        // Bottone pubblica messaggio
-        btnPublish.setOnClickListener(v -> {
-            String topic   = etTopic.getText().toString();
-            String message = etMessage.getText().toString();
-
-            if (topic.isEmpty() || message.isEmpty()) {
-                Toast.makeText(this, "Inserisci topic e messaggio", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            mqttManager.publish(topic, message, 1, new MqttManager.PublishCallback() {
-                @Override
-                public void onSuccess() {
-                    runOnUiThread(() ->
-                            Toast.makeText(MainActivity.this, "✅ Messaggio inviato!", Toast.LENGTH_SHORT).show()
-                    );
-                }
-
-                @Override
-                public void onFailure(String error) {
-                    runOnUiThread(() ->
-                            Toast.makeText(MainActivity.this, "❌ Errore invio: " + error, Toast.LENGTH_SHORT).show()
-                    );
-                }
-            });
+        btnProva.setOnClickListener(v -> {
+            mqttManager.disconnect();
+            startActivity(new Intent(this, ProvaActivity.class));
         });
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mqttManager.disconnect();
+    protected void onResume() {
+        super.onResume();
+        if (!mqttManager.isConnected()) {
+            connetti();
+        }
+    }
+
+    private void connetti() {
+        tvConnStatus.setText("⏳ Connessione in corso...");
+        tvConnStatus.setTextColor(0xFFAAAAAA);
+        btnRiprova.setVisibility(View.GONE);
+        mqttManager.connect(ProvaActivity.BROKER_URL, ProvaActivity.CLIENT_ID, ProvaActivity.USERNAME, ProvaActivity.PASSWORD);
     }
 
     @Override
@@ -138,4 +99,10 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
 }

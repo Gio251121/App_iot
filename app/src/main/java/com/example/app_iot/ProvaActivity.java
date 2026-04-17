@@ -9,16 +9,17 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
+import com.example.app_iot.BuildConfig;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class ProvaActivity extends AppCompatActivity {
 
     // ======= CONFIGURAZIONE BROKER =======
-    public static final String BROKER_URL = "ssl://0b9a48980b684944aabfe4adc2ebc36b.s1.eu.hivemq.cloud:8883";
-    public static final String CLIENT_ID  = "android-client-001";
-    public static final String USERNAME   = "Gio2511";
-    public static final String PASSWORD   = "Esteban21";
+    public static final String BROKER_URL = BuildConfig.BROKER_URL;
+    public static final String CLIENT_ID  = BuildConfig.CLIENT_ID;
+    public static final String USERNAME   = BuildConfig.USERNAME;
+    public static final String PASSWORD   = BuildConfig.PASSWORD;
     // =====================================
 
     private MqttManager mqttManager;

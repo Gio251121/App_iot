@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import com.example.app_iot.BuildConfig;
 
 // NUOVI IMPORT PER IL JSON
 import org.json.JSONException;

@@ -1,6 +1,17 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
+
 
 android {
     namespace = "com.example.app_iot"
@@ -18,6 +29,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "BROKER_URL", localProperties.getProperty("MQTT_BROKER_URL") ?: "\"\"")
+        buildConfigField("String", "CLIENT_ID",  localProperties.getProperty("MQTT_CLIENT_ID") ?: "\"\"")
+        buildConfigField("String", "USERNAME",   localProperties.getProperty("MQTT_USERNAME") ?: "\"\"")
+        buildConfigField("String", "PASSWORD",   localProperties.getProperty("MQTT_PASSWORD") ?: "\"\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

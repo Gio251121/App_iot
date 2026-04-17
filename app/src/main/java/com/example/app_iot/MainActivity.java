@@ -3,6 +3,7 @@ package com.example.app_iot;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -11,11 +12,23 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+// NUOVI IMPORT PER IL JSON
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class MainActivity extends AppCompatActivity {
+
 
     private MqttManager mqttManager;
     private TextView tvConnStatus;
     private Button btnRiprova;
+
+    // NUOVO: Riferimenti alle TextView dei sensori
+    private TextView tvTemperatura;
+    private TextView tvUmidita;
+
+    // Definiamo il topic come costante per comodità
+    private static final String TOPIC_DATI = "esp32/dati";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +43,48 @@ public class MainActivity extends AppCompatActivity {
         btnRiprova   = findViewById(R.id.btnRiprova);
         Button btnProva = findViewById(R.id.btnProva);
 
+        // NUOVO: Inizializza le TextView
+        tvTemperatura = findViewById(R.id.tvTemperatura);
+        tvUmidita = findViewById(R.id.tvUmidita);
+
         btnRiprova.setVisibility(View.GONE);
 
         mqttManager = new MqttManager();
+
+        // NUOVO: Intercettiamo i messaggi MQTT in arrivo
+        mqttManager.setMessageCallback(new MqttManager.MessageCallback() {
+            @Override
+            public void onMessageArrived(String topic, String message) {
+                // Controlliamo che il topic sia quello che ci interessa
+                if (topic.equals(TOPIC_DATI)) {
+                    try {
+                        // Creiamo un oggetto JSON a partire dalla stringa ricevuta
+                        JSONObject jsonObject = new JSONObject(message);
+
+                        // Estraiamo la temperatura (se presente nel JSON)
+                        if (jsonObject.has("temperatura")) {
+                            String temp = jsonObject.getString("temperatura");
+                            tvTemperatura.setText(temp + "°C");
+                        }
+
+                        // Estraiamo l'umidità (se presente nel JSON)
+                        if (jsonObject.has("umidita")) {
+                            String umidita = jsonObject.getString("umidita");
+                            tvUmidita.setText(umidita + "%");
+                        }
+
+                        // In futuro: qui aggiungerai il parse per la pillola
+                        // if (jsonObject.has("pillola_presa")) { ... }
+
+                    } catch (JSONException e) {
+                        Log.e("MQTT", "Errore nel parsing del JSON: " + message);
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        // Gestione stato connessione
         mqttManager.setConnectionCallback(new MqttManager.ConnectionCallback() {
             @Override
             public void onSuccess() {
@@ -41,6 +93,9 @@ public class MainActivity extends AppCompatActivity {
                     tvConnStatus.setTextColor(0xFF4CAF50);
                     btnRiprova.setVisibility(View.GONE);
                 });
+
+                // NUOVO: Appena connessi, ci iscriviamo al topic dell'ESP32
+                mqttManager.subscribe(TOPIC_DATI, 1);
             }
 
             @Override
@@ -103,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Buona pratica: disconnettere quando l'activity viene distrutta per liberare risorse
+        mqttManager.disconnect();
     }
-
 }

@@ -16,7 +16,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String KEY_PASSWORD  = "password";
     public static final String KEY_CLIENT_ID = "client_id";
     public static final String KEY_VERSION   = "version";
-    public static final int    PREFS_VERSION = 1; // aumenta quando cambi le credenziali nel codice
+    public static final int    PREFS_VERSION = 2; // aumenta quando cambi le credenziali nel codice
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

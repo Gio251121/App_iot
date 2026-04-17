@@ -17,8 +17,8 @@ public class ProvaActivity extends AppCompatActivity {
     // ======= CONFIGURAZIONE BROKER =======
     public static final String BROKER_URL = "ssl://0b9a48980b684944aabfe4adc2ebc36b.s1.eu.hivemq.cloud:8883";
     public static final String CLIENT_ID  = "android-client-001";
-    public static final String USERNAME   = "IOT-Project";
-    public static final String PASSWORD   = "Ccmt1234";
+    public static final String USERNAME   = "Gio2511";
+    public static final String PASSWORD   = "Esteban21";
     // =====================================
 
     private MqttManager mqttManager;

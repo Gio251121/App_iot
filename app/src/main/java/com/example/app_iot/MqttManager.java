@@ -10,21 +10,34 @@ public class MqttManager {
     private MqttClient mqttClient;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // Callback per la connessione
     public interface ConnectionCallback {
         void onSuccess();
         void onFailure(String error);
         void onDisconnected();
     }
 
+    // Callback per la pubblicazione
     public interface PublishCallback {
         void onSuccess();
         void onFailure(String error);
     }
 
+    // NUOVA: Callback per i messaggi in arrivo dall'ESP
+    public interface MessageCallback {
+        void onMessageArrived(String topic, String message);
+    }
+
     private ConnectionCallback connectionCallback;
+    private MessageCallback messageCallback; // Nuova variabile
 
     public void setConnectionCallback(ConnectionCallback callback) {
         this.connectionCallback = callback;
+    }
+
+    // NUOVO: Metodo per impostare la callback dei messaggi
+    public void setMessageCallback(MessageCallback callback) {
+        this.messageCallback = callback;
     }
 
     public void connect(String brokerUrl, String clientId, String username, String password) {
@@ -47,8 +60,16 @@ public class MqttManager {
                         });
                     }
 
+                    // MODIFICATO: Ora intercetta i messaggi in arrivo!
                     @Override
-                    public void messageArrived(String topic, MqttMessage message) {}
+                    public void messageArrived(String topic, MqttMessage message) {
+                        String payload = new String(message.getPayload());
+                        mainHandler.post(() -> {
+                            if (messageCallback != null) {
+                                messageCallback.onMessageArrived(topic, payload);
+                            }
+                        });
+                    }
 
                     @Override
                     public void deliveryComplete(IMqttDeliveryToken token) {}
@@ -65,14 +86,26 @@ public class MqttManager {
 
                 mqttClient.connect(options);
 
-                mainHandler.post(() -> {
-                    if (connectionCallback != null) connectionCallback.onSuccess();
-                });
+                // Nota: Nel tuo codice originale c'era un doppio trigger di onSuccess() qui.
+                // È meglio lasciarlo solo nel connectComplete della callback per evitare duplicati.
 
             } catch (MqttException e) {
                 mainHandler.post(() -> {
                     if (connectionCallback != null) connectionCallback.onFailure(e.getMessage());
                 });
+            }
+        }).start();
+    }
+
+    // NUOVO: Metodo per iscriversi a un topic
+    public void subscribe(String topic, int qos) {
+        new Thread(() -> {
+            try {
+                if (mqttClient != null && mqttClient.isConnected()) {
+                    mqttClient.subscribe(topic, qos);
+                }
+            } catch (MqttException e) {
+                e.printStackTrace();
             }
         }).start();
     }

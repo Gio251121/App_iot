@@ -3,94 +3,146 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:id="@+id/rootView"
+    android:layout_marginTop="30dp"
+    android:orientation="vertical"
+    android:background="#121212">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface"
-        android:elevation="2dp"
+        android:background="#1E1E1E"
+        android:elevation="4dp"
         app:title="Impostazioni"
-        app:navigationIcon="?attr/homeAsUpIndicator"/>
+        app:titleTextColor="#FFFFFF"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark"/>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="URL Broker"
-                android:textSize="12sp"
-                android:textColor="?attr/colorPrimary"
-                android:layout_marginBottom="4dp"/>
-
-            <EditText
-                android:id="@+id/etBrokerUrl"
+            <LinearLayout
+                android:id="@+id/headerMqtt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                android:layout_marginBottom="16dp"/>
+                android:orientation="horizontal"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Username"
-                android:textSize="12sp"
-                android:textColor="?attr/colorPrimary"
-                android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="CONNESSIONE MQTT"
+                    android:textColor="#BB86FC"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginLeft="4dp"/>
 
-            <EditText
-                android:id="@+id/etUsername"
+                <TextView
+                    android:id="@+id/iconMqtt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="▼"
+                    android:textColor="#BB86FC"
+                    android:textSize="12sp"
+                    android:layout_marginRight="4dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/contentMqtt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                android:layout_marginBottom="16dp"/>
+                android:orientation="vertical"
+                android:background="#1E1E1E"
+                android:padding="16dp"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Password"
-                android:textSize="12sp"
-                android:textColor="?attr/colorPrimary"
-                android:layout_marginBottom="4dp"/>
+                <EditText android:id="@+id/etBrokerUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Broker URL" android:textColor="#FFFFFF" android:textColorHint="#888888" android:inputType="textUri" android:layout_marginBottom="12dp"/>
+                <EditText android:id="@+id/etClientId" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Client ID" android:textColor="#FFFFFF" android:textColorHint="#888888" android:inputType="text" android:layout_marginBottom="12dp"/>
+                <EditText android:id="@+id/etUsername" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Username" android:textColor="#FFFFFF" android:textColorHint="#888888" android:inputType="text" android:layout_marginBottom="12dp"/>
+                <EditText android:id="@+id/etPassword" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Password" android:textColor="#FFFFFF" android:textColorHint="#888888" android:inputType="textPassword" />
+            </LinearLayout>
 
-            <EditText
-                android:id="@+id/etPassword"
+            <LinearLayout
+                android:id="@+id/headerPillole"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:layout_marginBottom="16dp"/>
+                android:orientation="horizontal"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Client ID"
-                android:textSize="12sp"
-                android:textColor="?attr/colorPrimary"
-                android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="GESTIONE PILLOLE"
+                    android:textColor="#BB86FC"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginLeft="4dp"/>
 
-            <EditText
-                android:id="@+id/etClientId"
+                <TextView
+                    android:id="@+id/iconPillole"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="▼"
+                    android:textColor="#BB86FC"
+                    android:textSize="12sp"
+                    android:layout_marginRight="4dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/contentPillole"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                android:layout_marginBottom="24dp"/>
+                android:orientation="vertical"
+                android:background="#1E1E1E"
+                android:padding="16dp"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Impostazioni prossimamente..." android:textColor="#888888"/>
+            </LinearLayout>
 
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Salva"/>
+                android:layout_height="56dp"
+                android:text="SALVA IMPOSTAZIONI"
+                android:backgroundTint="#BB86FC"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="20dp"/>
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="DISCONNETTI"
+                android:backgroundTint="#f74258"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:layout_marginBottom="32dp"/>
 
         </LinearLayout>
-    </ScrollView>
 
+    </ScrollView>
 </LinearLayout>

@@ -12,7 +12,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="#1E1E1E"
         android:elevation="4dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         app:theme="@style/ThemeOverlay.AppCompat.Dark"/>
 
     <ScrollView

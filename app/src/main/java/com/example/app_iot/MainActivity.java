@@ -129,8 +129,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!mqttManager.isConnected()) {
-            connetti();
+        if (mqttManager != null) {
+            mqttManager.disconnect(); // Chiude quella vecchia
+            connetti();              // Legge i nuovi dati e connette
         }
     }
 
@@ -138,7 +139,18 @@ public class MainActivity extends AppCompatActivity {
         tvConnStatus.setText("⏳ Connessione in corso...");
         tvConnStatus.setTextColor(0xFFAAAAAA);
         btnRiprova.setVisibility(View.GONE);
-        mqttManager.connect(ProvaActivity.BROKER_URL, ProvaActivity.CLIENT_ID, ProvaActivity.USERNAME, ProvaActivity.PASSWORD);
+
+        // 1. Apri le preferenze
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE);
+
+        // 2. Leggi i dati: prende quelli salvati nei settings, oppure usa BuildConfig di default
+        String url      = prefs.getString(SettingsActivity.KEY_URL, BuildConfig.BROKER_URL);
+        String clientId = prefs.getString(SettingsActivity.KEY_CLIENT_ID, BuildConfig.CLIENT_ID);
+        String user     = prefs.getString(SettingsActivity.KEY_USERNAME, BuildConfig.USERNAME);
+        String pass     = prefs.getString(SettingsActivity.KEY_PASSWORD, BuildConfig.PASSWORD);
+
+        // 3. Connettiti usando le variabili lette!
+        mqttManager.connect(url, clientId, user, pass);
     }
 
     @Override

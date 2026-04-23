@@ -31,10 +31,6 @@ public class SettingsActivity extends AppCompatActivity {
         LinearLayout contentMqtt = findViewById(R.id.contentMqtt);
         TextView iconMqtt = findViewById(R.id.iconMqtt);
 
-        LinearLayout headerPillole = findViewById(R.id.headerPillole);
-        LinearLayout contentPillole = findViewById(R.id.contentPillole);
-        TextView iconPillole = findViewById(R.id.iconPillole);
-
         // Serve per avere l'animazione di scorrimento fluido
         LinearLayout rootView = findViewById(R.id.rootView);
 
@@ -73,19 +69,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         // 3. Imposta il click listener per la seconda sezione
-        headerPillole.setOnClickListener(v -> {
-            boolean isExpanded = contentPillole.getVisibility() == View.VISIBLE;
 
-            TransitionManager.beginDelayedTransition(rootView, new AutoTransition());
-
-            if (isExpanded) {
-                contentPillole.setVisibility(View.GONE);
-                iconPillole.setText("▼");
-            } else {
-                contentPillole.setVisibility(View.VISIBLE);
-                iconPillole.setText("▲");
-            }
-        });
 
         // 1. Trova il bottone
         Button btnLogout = findViewById(R.id.btnLogout);

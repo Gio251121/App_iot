@@ -1,7 +1,11 @@
 package com.example.app_iot;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -31,13 +35,11 @@ public class MainActivity extends AppCompatActivity {
     private Button btnRiprova;
     private Button btnProva;
 
-    // Sensori
     private TextView tvTemperatura;
     private TextView tvUmidita;
 
-    // Pillole e UI
     private TextView tvProssimaDose;
-    private TextView tvProssimaPillolaNome; // <-- NUOVO TESTO PER IL NOME
+    private TextView tvProssimaPillolaNome;
     private TextView tvProssimaDoseLabel;
     private TextView tvUltimaDose;
     private Button btnConfermaDose;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         tvUmidita = findViewById(R.id.tvUmidita);
 
         tvProssimaDose = findViewById(R.id.tvProssimaDose);
-        tvProssimaPillolaNome = findViewById(R.id.tvProssimaPillolaNome); // <-- COLLEGATO QUI
+        tvProssimaPillolaNome = findViewById(R.id.tvProssimaPillolaNome);
         tvProssimaDoseLabel = findViewById(R.id.tvProssimaDoseLabel);
         tvUltimaDose = findViewById(R.id.tvUltimaDose);
         btnConfermaDose = findViewById(R.id.btnConfermaDose);
@@ -150,10 +152,12 @@ public class MainActivity extends AppCompatActivity {
             String oraAttuale = String.format(Locale.getDefault(), "%02d:%02d", hAdesso, mAdesso);
 
             String ultimaOra = null;
+
             String prossimaOra = null;
             String prossimaPillolaNome = "";
             int prossimaPillolaQt = 0;
             String etichettaGiorno = "Oggi";
+            int giorniAllaProssima = 0; // Serve per calcolare quando far suonare la notifica
 
             // 1. CERCHIAMO L'ULTIMA DOSE (Solo oggi)
             if (prescrizioniSettimana.has(String.valueOf(oggi))) {
@@ -164,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // 2. CERCHIAMO LA PROSSIMA DOSE (Guarda avanti fino a 7 giorni)
+            // 2. CERCHIAMO LA PROSSIMA DOSE
             boolean trovata = false;
             for (int i = 0; i < 7; i++) {
                 int giornoDaControllare = (oggi + i - 1) % 7 + 1;
@@ -178,18 +182,18 @@ public class MainActivity extends AppCompatActivity {
                         if (i == 0) {
                             if (ora.compareTo(oraAttuale) > 0) {
                                 prossimaOra = ora;
-                                JSONObject p = pilloleGiorno.getJSONObject(ora);
-                                prossimaPillolaNome = p.getString("m");
-                                prossimaPillolaQt = p.getInt("q");
+                                prossimaPillolaNome = pilloleGiorno.getJSONObject(ora).getString("m");
+                                prossimaPillolaQt = pilloleGiorno.getJSONObject(ora).getInt("q");
+                                giorniAllaProssima = i;
                                 trovata = true;
                                 break;
                             }
                         } else {
                             prossimaOra = ora;
-                            JSONObject p = pilloleGiorno.getJSONObject(ora);
-                            prossimaPillolaNome = p.getString("m");
-                            prossimaPillolaQt = p.getInt("q");
+                            prossimaPillolaNome = pilloleGiorno.getJSONObject(ora).getString("m");
+                            prossimaPillolaQt = pilloleGiorno.getJSONObject(ora).getInt("q");
                             etichettaGiorno = getNomeGiorno(giornoDaControllare);
+                            giorniAllaProssima = i;
                             trovata = true;
                             break;
                         }
@@ -198,18 +202,14 @@ public class MainActivity extends AppCompatActivity {
                 if (trovata) break;
             }
 
-            // 3. AGGIORNAMENTO GRAFICA
-
-            // Se l'orario è scattato ma non ho premuto il bottone
+            // 3. AGGIORNAMENTO GRAFICA E NOTIFICHE
             if (ultimaOra != null && !ultimaOra.equals(ultimaConfermata)) {
                 JSONObject d = prescrizioniSettimana.getJSONObject(String.valueOf(oggi)).getJSONObject(ultimaOra);
-
-                tvProssimaDose.setText(ultimaOra); // Tiene l'orario grande (Es: 08:00)
-                tvProssimaPillolaNome.setText(d.getString("m") + " (" + d.getInt("q") + " pz)"); // Nome sotto
+                tvProssimaDose.setText(ultimaOra);
+                tvProssimaPillolaNome.setText(d.getString("m") + " (" + d.getInt("q") + " pz)");
 
                 tvProssimaDoseLabel.setText("È l'ora di prenderla!");
-                tvProssimaDoseLabel.setTextColor(0xFFFF3333); // Rosso
-
+                tvProssimaDoseLabel.setTextColor(0xFFFF3333);
                 btnConfermaDose.setVisibility(View.VISIBLE);
 
                 final String oraInSospeso = ultimaOra;
@@ -219,14 +219,16 @@ public class MainActivity extends AppCompatActivity {
                     tvProssimaDoseLabel.setTextColor(0xFF888888);
                     calcolaEmostraDosi();
                 });
-            }
-            // Aspettando la prossima pillola
-            else {
+            } else {
                 btnConfermaDose.setVisibility(View.GONE);
                 if (prossimaOra != null) {
                     tvProssimaDose.setText(prossimaOra);
                     tvProssimaPillolaNome.setText(prossimaPillolaNome + " (" + prossimaPillolaQt + " pz)");
                     tvProssimaDoseLabel.setText(etichettaGiorno);
+
+                    // --- IMPOSTA LA NOTIFICA PER LA PROSSIMA DOSE ---
+                    impostaNotificaAndroid(giorniAllaProssima, prossimaOra, prossimaPillolaNome);
+
                 } else {
                     tvProssimaDose.setText("--:--");
                     tvProssimaPillolaNome.setText("Nessuna terapia programmata");
@@ -234,7 +236,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // Grafica Ultima dose presa (Card sotto)
             if (ultimaOra != null) {
                 JSONObject d = prescrizioniSettimana.getJSONObject(String.valueOf(oggi)).getJSONObject(ultimaOra);
                 tvUltimaDose.setText(d.getString("m") + " alle " + ultimaOra);
@@ -244,6 +245,41 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // =========================================================
+    // FUNZIONE DI NOTIFICA
+    // =========================================================
+    private void impostaNotificaAndroid(int giorniAggiuntivi, String ora, String nomePillola) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        // CONTROLLO SICUREZZA
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Log.e("Allarme", "Permesso per allarmi esatti non concesso.");
+                return; // Evita il crash
+            }
+        }
+
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        intent.putExtra("nome_pillola", nomePillola);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        String[] parti = ora.split(":");
+        Calendar calAllarme = Calendar.getInstance();
+        calAllarme.add(Calendar.DAY_OF_YEAR, giorniAggiuntivi); // Aggiunge i giorni di distanza (0 = oggi)
+        calAllarme.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parti[0]));
+        calAllarme.set(Calendar.MINUTE, Integer.parseInt(parti[1]));
+        calAllarme.set(Calendar.SECOND, 0);
+
+        if (calAllarme.getTimeInMillis() <= System.currentTimeMillis()) return;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calAllarme.getTimeInMillis(), pendingIntent);
         }
     }
 

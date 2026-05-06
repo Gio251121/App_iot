@@ -5,6 +5,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -15,6 +16,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
+
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 public class ProvaActivity extends AppCompatActivity {
 
@@ -47,7 +57,6 @@ public class ProvaActivity extends AppCompatActivity {
         btnPublish = findViewById(R.id.btnPublish);
         tvStatus   = findViewById(R.id.tvStatus);
 
-        // NUOVO BOTTONE PER TESTARE LA NOTIFICA
         btnTestNotifica = findViewById(R.id.btnTestNotifica);
 
         btnPublish.setEnabled(false);
@@ -116,29 +125,71 @@ public class ProvaActivity extends AppCompatActivity {
         btnTestNotifica.setOnClickListener(v -> {
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-            // CONTROLLO DI SICUREZZA PER ANDROID 12+ (API 31+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (!alarmManager.canScheduleExactAlarms()) {
                     Toast.makeText(this, "Devi concedere il permesso per le sveglie esatte nelle impostazioni!", Toast.LENGTH_LONG).show();
-                    // Opzionale: apri le impostazioni per l'utente
                     Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
                     startActivity(intent);
-                    return; // Ferma il codice qui per evitare il crash
+                    return;
                 }
             }
 
-            Toast.makeText(this, "Sveglia impostata! Chiudi l'app e aspetta 5 secondi...", Toast.LENGTH_LONG).show();
+            // 1. Cerca la VERA prossima pillola nel DB per mostrare il nome giusto
+            SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+            String jsonString = prefs.getString("prescrizioni_salvate", "{}");
+            String pillolaReale = "Nessuna pillola programmata";
 
+            try {
+                JSONObject prescrizioni = new JSONObject(jsonString);
+                Calendar cal = Calendar.getInstance();
+                int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+                int oggi = (dayOfWeek == Calendar.SUNDAY) ? 7 : dayOfWeek - 1;
+                int hAdesso = cal.get(Calendar.HOUR_OF_DAY);
+                int mAdesso = cal.get(Calendar.MINUTE);
+                String oraAttuale = String.format(Locale.getDefault(), "%02d:%02d", hAdesso, mAdesso);
+
+                boolean trovata = false;
+                for (int i = 0; i < 7; i++) {
+                    int giornoDaControllare = (oggi + i - 1) % 7 + 1;
+                    String giornoStr = String.valueOf(giornoDaControllare);
+
+                    if (prescrizioni.has(giornoStr)) {
+                        JSONObject pilloleGiorno = prescrizioni.getJSONObject(giornoStr);
+                        List<String> orari = new ArrayList<>();
+                        Iterator<String> keys = pilloleGiorno.keys();
+                        while(keys.hasNext()) orari.add(keys.next());
+                        Collections.sort(orari);
+
+                        for (String ora : orari) {
+                            if (i == 0) {
+                                if (ora.compareTo(oraAttuale) > 0) {
+                                    pillolaReale = pilloleGiorno.getJSONObject(ora).getString("m");
+                                    trovata = true; break;
+                                }
+                            } else {
+                                pillolaReale = pilloleGiorno.getJSONObject(ora).getString("m");
+                                trovata = true; break;
+                            }
+                        }
+                    }
+                    if (trovata) break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // 2. Prepara la notifica finta
             Intent intent = new Intent(this, AlarmReceiver.class);
-            intent.putExtra("nome_pillola", "Pillola di Test");
+            intent.putExtra("nome_pillola", pillolaReale + " (TEST)");
+            intent.putExtra("Test", true);
 
+            // Usa ID 999
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     this, 999, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
 
             long tempoSveglia = System.currentTimeMillis() + 5000;
 
-            // Imposta l'allarme (ora che sappiamo di avere il permesso)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, tempoSveglia, pendingIntent);
             }

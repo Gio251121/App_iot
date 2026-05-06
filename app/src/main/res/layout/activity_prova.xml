@@ -78,7 +78,7 @@
                 android:id="@+id/btnTestNotifica"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="TESTA NOTIFICA (Tra 5 sec)"
+                android:text="Notifica Test"
                 android:layout_marginTop="16dp" />
 
         </LinearLayout>

@@ -19,47 +19,52 @@ public class LoginActivity extends AppCompatActivity {
         boolean isLogged = prefs.getBoolean("isLogged", false);
 
         if (isLogged) {
-            // Se ha già fatto l'accesso in passato, salta direttamente alla Main!
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish(); // Chiude la pagina di Login
-            return;   // Ferma la lettura del resto di questo file
+            finish();
+            return;
         }
         setContentView(R.layout.activity_login);
 
         mqttManager = new MqttManager();
 
-        EditText etUser = findViewById(R.id.etUser);
-        EditText etPassword = findViewById(R.id.etPassword);
+        EditText etUser = findViewById(R.id.etUser);         // Codice Seriale
+        EditText etPassword = findViewById(R.id.etPassword); // Password del semaforo
         Button btnAccedi = findViewById(R.id.btnAccedi);
 
         btnAccedi.setOnClickListener(v -> {
-            String user = etUser.getText().toString();
-            String pass = etPassword.getText().toString();
+            String codiceSemaforo = etUser.getText().toString().trim();
+            String passSemaforo = etPassword.getText().toString().trim();
+
+            if (codiceSemaforo.isEmpty() || passSemaforo.isEmpty()) {
+                Toast.makeText(this, "Inserisci Seriale e Password!", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             // 🚨 1. MASTER KEY: Login offline di emergenza
-            if (user.equals("admin") && pass.equals("1234")) {
-                Toast.makeText(LoginActivity.this, "Accesso di emergenza (Admin)!", Toast.LENGTH_SHORT).show();
-                eseguiLoginEffettivo();
-                return; // Ferma tutto e non usa MQTT
+            if (codiceSemaforo.equals("admin") && passSemaforo.equals("1234")) {
+                Toast.makeText(LoginActivity.this, "Accesso di emergenza!", Toast.LENGTH_SHORT).show();
+                eseguiLoginEffettivo(codiceSemaforo);
+                return;
             }
 
             // 🌐 2. PREPARAZIONE DATI MQTT
             String url      = BuildConfig.BROKER_URL;
-            String clientId = BuildConfig.CLIENT_ID;
-            String user2    = BuildConfig.USERNAME;
-            String pass2    = BuildConfig.PASSWORD;
+            // Usiamo il seriale per identificare il client in modo univoco
+            String clientId = BuildConfig.CLIENT_ID + "_" + codiceSemaforo;
+            String userMqtt = BuildConfig.USERNAME;
+            String passMqtt = BuildConfig.PASSWORD;
 
-            String clientId2 = clientId + "_" + System.currentTimeMillis();
-            String mioTopicRisposta = "esp32/risposta/" + clientId2;
+            // 🎯 ECCO LA MODIFICA: Il topic di risposta ora è basato sul Seriale!
+            String mioTopicRisposta = "esp32/risposta/" + codiceSemaforo;
 
+            // Prepariamo il pacchetto con Seriale, Password e il nuovo Topic
             String messaggioCompleto = "{" +
-                    "\"username\":\"" + user + "\"," +
-                    "\"password\":\"" + pass + "\"," +
+                    "\"codice_seriale\":\"" + codiceSemaforo + "\"," +
+                    "\"password\":\"" + passSemaforo + "\"," +
                     "\"reply_to\":\"" + mioTopicRisposta + "\"" +
                     "}";
 
-            // 3. IMPOSTIAMO IL RICEVITORE: Cosa fare quando Laravel ci risponde
-            // Usiamo il tuo nuovo metodo setMessageCallback
+            // 3. IMPOSTIAMO IL RICEVITORE
             mqttManager.setMessageCallback((topic_in_arrivo, messaggio_ricevuto) -> {
                 if (topic_in_arrivo.equals(mioTopicRisposta)) {
                     try {
@@ -67,79 +72,65 @@ public class LoginActivity extends AppCompatActivity {
                         int stato = json.getInt("stato");
 
                         if (stato == 1) {
-                            // LOGIN CORRETTO!
-                            String jsonPrescrizioni = json.getJSONObject("p").toString();
+                            String nomeIncrocio = json.optString("nome_incrocio", "Semaforo Sconosciuto");
 
-                            // 2. Salviamo il JSON nelle SharedPreferences insieme al login
+                            // 💾 Salviamo tutto nel database del telefono
                             SharedPreferences prefs2 = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                             prefs2.edit()
                                     .putBoolean("isLogged", true)
-                                    .putLong("loginTime", System.currentTimeMillis())
-                                    .putString("prescrizioni_salvate", jsonPrescrizioni) // <--- ECCOLO!
+                                    .putString("codice_seriale_salvato", codiceSemaforo) // Salvato per il futuro!
+                                    .putString("nome_incrocio_salvato", nomeIncrocio)
                                     .apply();
 
-                            Toast.makeText(LoginActivity.this, "Accesso eseguito!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, "Connesso a: " + nomeIncrocio, Toast.LENGTH_SHORT).show();
 
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {
-                            // LOGIN FALLITO
-                            Toast.makeText(LoginActivity.this, "Utente o password errati!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this, "Seriale o Password errati!", Toast.LENGTH_LONG).show();
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
-                        Toast.makeText(LoginActivity.this, "Errore nella lettura dei dati dal server", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Errore di comunicazione col server", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
-            // 4. IMPOSTIAMO LE AZIONI DI CONNESSIONE (Sostituisce il vecchio timer di 1.5 secondi)
+            // 4. AZIONI DI CONNESSIONE E INVIO
             mqttManager.setConnectionCallback(new MqttManager.ConnectionCallback() {
                 @Override
                 public void onSuccess() {
-                    // Appena la connessione ha successo, ci iscriviamo e pubblichiamo!
+                    // Ci iscriviamo al nuovo topic personalizzato
                     mqttManager.subscribe(mioTopicRisposta, 1);
 
                     mqttManager.publish("esp32/login_request", messaggioCompleto, 1, new MqttManager.PublishCallback() {
                         @Override
                         public void onSuccess() {
-                            System.out.println("✅ Richiesta inviata. In attesa di risposta su: " + mioTopicRisposta);
+                            System.out.println("✅ Invio credenziali in corso sul topic di ascolto: " + mioTopicRisposta);
                         }
-
                         @Override
-                        public void onFailure(String error) { // Modificato in String come vuole il tuo MqttManager
+                        public void onFailure(String error) {
                             System.out.println("❌ Errore di invio: " + error);
                         }
                     });
                 }
-
                 @Override
                 public void onFailure(String error) {
                     Toast.makeText(LoginActivity.this, "Errore di connessione al broker", Toast.LENGTH_SHORT).show();
                 }
-
                 @Override
                 public void onDisconnected() {}
             });
 
-            // 5. AVVIA LA CONNESSIONE (Questo fa partire tutto il meccanismo)
-            Toast.makeText(LoginActivity.this, "Verifica credenziali in corso...", Toast.LENGTH_SHORT).show();
-            mqttManager.connect(url, clientId2, user2, pass2);
+            Toast.makeText(LoginActivity.this, "Verifica in corso...", Toast.LENGTH_SHORT).show();
+            mqttManager.connect(url, clientId, userMqtt, passMqtt);
         });
     }
 
-    // Un piccolo "metodo aiutante" per non ripetere il codice di salvataggio due volte
-    private void eseguiLoginEffettivo() {
-        if (mqttManager != null) {
-            mqttManager.disconnect();
-        }
-
+    private void eseguiLoginEffettivo(String codice) {
+        if (mqttManager != null) mqttManager.disconnect();
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        prefs.edit()
-                .putBoolean("isLogged", true)
-                .putLong("loginTime", System.currentTimeMillis())
-                .apply();
-
+        prefs.edit().putBoolean("isLogged", true).putString("codice_seriale_salvato", codice).apply();
         startActivity(new Intent(LoginActivity.this, MainActivity.class));
         finish();
     }

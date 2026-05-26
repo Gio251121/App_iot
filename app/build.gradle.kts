@@ -64,4 +64,5 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
 }

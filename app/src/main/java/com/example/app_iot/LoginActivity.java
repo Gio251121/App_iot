@@ -5,18 +5,23 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
     private MqttManager mqttManager;
+    private EditText etUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         boolean isLogged = prefs.getBoolean("isLogged", false);
+
+
 
         if (isLogged) {
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
@@ -25,46 +30,70 @@ public class LoginActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_login);
 
+        Button btnTrovaSemafori = findViewById(R.id.btnTrovaSemafori);
+        btnTrovaSemafori.setOnClickListener(v -> {
+            if (mqttManager != null) mqttManager.disconnect();
+            startActivity(new Intent(LoginActivity.this, MappaActivity.class));
+        });
+
         mqttManager = new MqttManager();
 
-        EditText etUser = findViewById(R.id.etUser);         // Codice Seriale
-        EditText etPassword = findViewById(R.id.etPassword); // Password del semaforo
+        RadioGroup rgModalita = findViewById(R.id.rgModalita);
+        LinearLayout layoutPassword = findViewById(R.id.layoutPassword);
+         etUser = findViewById(R.id.etUser);
+        EditText etPassword = findViewById(R.id.etPassword);
         Button btnAccedi = findViewById(R.id.btnAccedi);
 
+        gestisciSerialeRicevuto(getIntent());
+
+
+
+// Ascoltatore per mostrare o nascondere il campo password in base al ruolo selezionato
+        rgModalita.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rbUtente) {
+                layoutPassword.setVisibility(android.view.View.GONE);
+                etPassword.setText(""); // Svuota il campo se si torna a utente
+            } else {
+                layoutPassword.setVisibility(android.view.View.VISIBLE);
+            }
+        });
+
         btnAccedi.setOnClickListener(v -> {
-            String codiceSemaforo = etUser.getText().toString().trim();
-            String passSemaforo = etPassword.getText().toString().trim();
+                    String codiceSemaforo = etUser.getText().toString().trim();
+                    // Se l'utente è in modalità base, invia una stringa vuota come password
+                    String passSemaforo = (rgModalita.getCheckedRadioButtonId() == R.id.rbUtente) ? "" : etPassword.getText().toString().trim();
 
-            if (codiceSemaforo.isEmpty() || passSemaforo.isEmpty()) {
-                Toast.makeText(this, "Inserisci Seriale e Password!", Toast.LENGTH_SHORT).show();
-                return;
-            }
+                    if (codiceSemaforo.isEmpty()) {
+                        Toast.makeText(this, "Inserisci il Codice Seriale!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-            // 🚨 1. MASTER KEY: Login offline di emergenza
-            if (codiceSemaforo.equals("admin") && passSemaforo.equals("1234")) {
-                Toast.makeText(LoginActivity.this, "Accesso di emergenza!", Toast.LENGTH_SHORT).show();
-                eseguiLoginEffettivo(codiceSemaforo);
-                return;
-            }
+                    if (rgModalita.getCheckedRadioButtonId() == R.id.rbManutentore && passSemaforo.isEmpty()) {
+                        Toast.makeText(this, "Inserisci la password di manutenzione!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-            // 🌐 2. PREPARAZIONE DATI MQTT
-            String url      = BuildConfig.BROKER_URL;
-            // Usiamo il seriale per identificare il client in modo univoco
-            String clientId = BuildConfig.CLIENT_ID + "_" + codiceSemaforo;
+                    // Login offline di emergenza
+                    if (codiceSemaforo.equals("admin") && passSemaforo.equals("1234")) {
+                        Toast.makeText(LoginActivity.this, "Accesso di emergenza!", Toast.LENGTH_SHORT).show();
+                        eseguiLoginEffettivo(codiceSemaforo, "admin");
+                        return;
+                    }
+
+            String url = BuildConfig.BROKER_URL;
+            // Generazione ClientID e Topic univoci per evitare collisioni MQTT
+            String clientId = BuildConfig.CLIENT_ID + "_" + Math.random();
             String userMqtt = BuildConfig.USERNAME;
             String passMqtt = BuildConfig.PASSWORD;
 
-            // 🎯 ECCO LA MODIFICA: Il topic di risposta ora è basato sul Seriale!
-            String mioTopicRisposta = "esp32/risposta/" + codiceSemaforo;
+            String mioTopicRisposta = "esp32/risposta/" + Math.random();
 
-            // Prepariamo il pacchetto con Seriale, Password e il nuovo Topic
             String messaggioCompleto = "{" +
                     "\"codice_seriale\":\"" + codiceSemaforo + "\"," +
                     "\"password\":\"" + passSemaforo + "\"," +
                     "\"reply_to\":\"" + mioTopicRisposta + "\"" +
                     "}";
 
-            // 3. IMPOSTIAMO IL RICEVITORE
             mqttManager.setMessageCallback((topic_in_arrivo, messaggio_ricevuto) -> {
                 if (topic_in_arrivo.equals(mioTopicRisposta)) {
                     try {
@@ -74,15 +103,19 @@ public class LoginActivity extends AppCompatActivity {
                         if (stato == 1) {
                             String nomeIncrocio = json.optString("nome_incrocio", "Semaforo Sconosciuto");
 
-                            // 💾 Salviamo tutto nel database del telefono
+                            // Estrazione ruolo per la gestione permessi in MainActivity
+                            String ruolo = json.optString("ruolo", "utente");
+
+                            // Salvataggio credenziali e ruolo in SharedPreferences
                             SharedPreferences prefs2 = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                             prefs2.edit()
                                     .putBoolean("isLogged", true)
-                                    .putString("codice_seriale_salvato", codiceSemaforo) // Salvato per il futuro!
+                                    .putString("codice_seriale_salvato", codiceSemaforo)
                                     .putString("nome_incrocio_salvato", nomeIncrocio)
+                                    .putString("ruolo_utente", ruolo)
                                     .apply();
 
-                            Toast.makeText(LoginActivity.this, "Connesso a: " + nomeIncrocio, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, "Connesso come: " + ruolo, Toast.LENGTH_SHORT).show();
 
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
@@ -96,11 +129,10 @@ public class LoginActivity extends AppCompatActivity {
                 }
             });
 
-            // 4. AZIONI DI CONNESSIONE E INVIO
             mqttManager.setConnectionCallback(new MqttManager.ConnectionCallback() {
                 @Override
                 public void onSuccess() {
-                    // Ci iscriviamo al nuovo topic personalizzato
+                    // Sottoscrizione al topic di risposta univoco prima di pubblicare
                     mqttManager.subscribe(mioTopicRisposta, 1);
 
                     mqttManager.publish("esp32/login_request", messaggioCompleto, 1, new MqttManager.PublishCallback() {
@@ -127,11 +159,42 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void eseguiLoginEffettivo(String codice) {
+    // Metodo aggiornato per includere il ruolo nel login di emergenza
+    private void eseguiLoginEffettivo(String codice, String ruolo) {
         if (mqttManager != null) mqttManager.disconnect();
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        prefs.edit().putBoolean("isLogged", true).putString("codice_seriale_salvato", codice).apply();
+        prefs.edit()
+                .putBoolean("isLogged", true)
+                .putString("codice_seriale_salvato", codice)
+                .putString("ruolo_utente", ruolo)
+                .apply();
         startActivity(new Intent(LoginActivity.this, MainActivity.class));
         finish();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // Aggiorna l'intent originario archiviato nell'activity con quello corrente
+        setIntent(intent);
+        // Analizza i dati del nuovo intent per popolare la UI
+        gestisciSerialeRicevuto(intent);
+    }
+
+    /**
+     * Sottoprogramma centralizzato per l'estrazione del codice seriale e l'aggiornamento grafico.
+     */
+    private void gestisciSerialeRicevuto(Intent intent) {
+        if (intent != null) {
+            String serialeRicevuto = intent.getStringExtra("seriale_cliccato");
+            if (serialeRicevuto != null && !serialeRicevuto.isEmpty() && etUser != null) {
+                // Assegnazione del testo recuperato dall'extra
+                etUser.setText(serialeRicevuto);
+                // Allineamento dell'indice del cursore alla fine della stringa
+                etUser.setSelection(serialeRicevuto.length());
+
+                Toast.makeText(this, "Seriale caricato dalla mappa", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

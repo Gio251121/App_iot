@@ -9,11 +9,10 @@
     android:id="@+id/login">
 
 
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="BENTORNATO"
+        android:text="App SemaNet"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -23,10 +22,37 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Accedi per gestire il tuo semaforo"
+        android:text="Accedi per monitorare i semafori"
         android:textColor="#888888"
         android:textSize="14sp"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="24dp"/>
+
+    <RadioGroup
+        android:id="@+id/rgModalita"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="24dp">
+
+        <RadioButton
+            android:id="@+id/rbUtente"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Utente"
+            android:textColor="#FFFFFF"
+            android:checked="true"
+            android:buttonTint="#BB86FC"/>
+
+        <RadioButton
+            android:id="@+id/rbManutentore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manutentore"
+            android:textColor="#FFFFFF"
+            android:layout_marginStart="24dp"
+            android:buttonTint="#BB86FC"/>
+    </RadioGroup>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -40,7 +66,7 @@
             android:id="@+id/etUser"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Nome utente"
+            android:hint="Codice Seriale"
             android:textColor="#FFFFFF"
             android:textColorHint="#888888"
             android:inputType="text"
@@ -49,23 +75,23 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/layoutPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="#1E1E1E"
         android:padding="8dp"
-        android:layout_marginBottom="32dp">
-
-        <EditText
-            android:id="@+id/etPassword"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Password"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#888888"
-            android:inputType="textPassword"
-            android:background="@android:color/transparent"
-            android:paddingStart="8dp"/>
+        android:layout_marginBottom="32dp"
+        android:visibility="gone"> <EditText
+        android:id="@+id/etPassword"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Password del semaforo"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#888888"
+        android:inputType="textPassword"
+        android:background="@android:color/transparent"
+        android:paddingStart="8dp"/>
     </LinearLayout>
 
     <Button
@@ -75,7 +101,18 @@
         android:text="ACCEDI"
         android:backgroundTint="#BB86FC"
         android:textColor="#000000"
-        android:layout_marginBottom="150dp"
+        android:layout_marginBottom="100dp"
         android:textStyle="bold"/>
 
+    <Button
+        android:id="@+id/btnTrovaSemafori"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Non hai il seriale? Cerca sulla mappa"
+        android:textSize="15sp"
+        android:textColor="#BB86FC"
+        android:background="@android:color/transparent"
+        android:textAllCaps="false"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="24dp"/>
 </LinearLayout>

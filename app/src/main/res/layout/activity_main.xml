@@ -25,7 +25,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- STATO CONNESSIONE -->
             <TextView
                 android:id="@+id/tvConnStatus"
                 android:layout_width="match_parent"
@@ -46,72 +45,128 @@
                 android:layout_marginBottom="16dp"
                 android:visibility="gone"/>
 
-            <!-- SCHEDA INFORMAZIONI SEMAFORO -->
+            <TextView
+                android:id="@+id/tvAllerte"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF5252"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="#33FF0000"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="#1E1E1E"
+                android:orientation="horizontal"
+                android:background="@drawable/bg_card_dark"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="POSIZIONE SEMAFORO"
-                    android:textColor="#888888"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.1"/>
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tvNomeIncrocio"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Incrocio Sconosciuto"
-                    android:textColor="#FFFFFF"
-                    android:textSize="24sp"
-                    android:fontFamily="sans-serif-light"
-                    android:layout_marginTop="2dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="POSIZIONE SEMAFORO"
+                        android:textColor="#888888"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"/>
 
-                <TextView
-                    android:id="@+id/tvCodiceSeriale"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:id="@+id/tvNomeIncrocio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Incrocio Sconosciuto"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
+                        android:fontFamily="sans-serif-light"
+                        android:layout_marginTop="2dp"/>
+
+                    <TextView
+                        android:id="@+id/tvCodiceSeriale"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seriale: --"
+                        android:textColor="#AAAAAA"
+                        android:textSize="13sp"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="44dp"
                     android:layout_height="wrap_content"
-                    android:text="Seriale: --"
-                    android:textColor="#AAAAAA"
-                    android:textSize="14sp"
-                    android:layout_marginTop="4dp"/>
+                    android:orientation="vertical"
+                    android:background="#1A1A1A"
+                    android:padding="6dp"
+                    android:gravity="center">
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/cardRossa"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        app:cardCornerRadius="13dp"
+                        app:cardBackgroundColor="#55FF0000"
+                        app:cardElevation="0dp"/>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/cardGialla"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        app:cardCornerRadius="13dp"
+                        app:cardBackgroundColor="#55FFFF00"
+                        app:cardElevation="0dp"
+                        android:layout_marginTop="6dp"/>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/cardVerde"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        app:cardCornerRadius="13dp"
+                        app:cardBackgroundColor="#5500FF00"
+                        app:cardElevation="0dp"
+                        android:layout_marginTop="6dp"/>
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- SCHEDA STATO ATTUALE -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="#1E1E1E"
-                android:padding="16dp"
+                android:orientation="horizontal"
                 android:layout_marginBottom="12dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="MODALITÀ ATTUALE"
-                    android:textColor="#888888"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.1"/>
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="16dp"
+                    android:layout_marginEnd="6dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TEMPERATURA" android:textColor="#888888" android:textSize="10sp"/>
+                    <TextView android:id="@+id/tvTemperatura" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--°C" android:textColor="#FFFFFF" android:textSize="22sp"/>
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvStatoSemaforo"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="In attesa di dati..."
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:layout_marginTop="4dp"
-                    android:textStyle="bold"/>
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="16dp"
+                    android:layout_marginStart="6dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="UMIDITÀ" android:textColor="#888888" android:textSize="10sp"/>
+                    <TextView android:id="@+id/tvUmidita" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--%" android:textColor="#FFFFFF" android:textSize="22sp"/>
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- SCHEDA SENSORI (Temp/Umidità per l'hardware) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -123,26 +178,11 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:background="#1E1E1E"
+                    android:background="@drawable/bg_card_dark"
                     android:padding="16dp"
                     android:layout_marginEnd="6dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TEMP. SCHEDA"
-                        android:textColor="#888888"
-                        android:textSize="10sp"
-                        android:letterSpacing="0.1"/>
-
-                    <TextView
-                        android:id="@+id/tvTemperatura"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="--°C"
-                        android:textColor="#FFFFFF"
-                        android:textSize="28sp"
-                        android:fontFamily="sans-serif-light"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="LUMINOSITÀ" android:textColor="#888888" android:textSize="10sp"/>
+                    <TextView android:id="@+id/tvLuminosita" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--%" android:textColor="#FFFFFF" android:textSize="22sp"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -150,74 +190,72 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:background="#1E1E1E"
+                    android:background="@drawable/bg_card_dark"
                     android:padding="16dp"
                     android:layout_marginStart="6dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="UMIDITÀ"
-                        android:textColor="#888888"
-                        android:textSize="10sp"
-                        android:letterSpacing="0.1"/>
-
-                    <TextView
-                        android:id="@+id/tvUmidita"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="--%"
-                        android:textColor="#FFFFFF"
-                        android:textSize="28sp"
-                        android:fontFamily="sans-serif-light"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TRAFFICO" android:textColor="#888888" android:textSize="10sp"/>
+                    <TextView android:id="@+id/tvTraffico" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="#FFFFFF" android:textSize="22sp"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- PULSANTI DI CONTROLLO -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="PANNELLO DI CONTROLLO"
-                android:textColor="#888888"
-                android:textSize="11sp"
-                android:letterSpacing="0.1"
-                android:layout_marginBottom="4dp"/>
-
-            <Button
-                android:id="@+id/btnAccendiSemaforo"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="ATTIVA SEMAFORO"
-                android:backgroundTint="#1B5E20"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="8dp"/>
-
-            <Button
-                android:id="@+id/btnInattivoSemaforo"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="MODALITÀ INATTIVA (GIALLO LAMPEGGIANTE)"
-                android:backgroundTint="#F57F17"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="8dp"/>
-
-            <Button
-                android:id="@+id/btnSpegniSemaforo"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="SPEGNI SEMAFORO"
-                android:backgroundTint="#B71C1C"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="24dp"/>
-
-            <Button
-                android:id="@+id/btnProva"
+            <LinearLayout
+                android:id="@+id/pannelloControllo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Modalità Prova MQTT"
-                android:backgroundTint="#333333"
-                android:textColor="#AAAAAA"/>
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PANNELLO DI CONTROLLO"
+                    android:textColor="#888888"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="12dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <Button
+                        android:id="@+id/btnAccendiSemaforo"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="Accendi"
+                        android:textSize="11sp"
+                        android:backgroundTint="#2E4A31"
+                        android:textColor="#E0E0E0"
+                        android:layout_marginEnd="6dp"/>
+
+                    <Button
+                        android:id="@+id/btnInattivoSemaforo"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="Iattivo"
+                        android:textSize="11sp"
+                        android:backgroundTint="#5E4823"
+                        android:textColor="#E0E0E0"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"/>
+
+                    <Button
+                        android:id="@+id/btnSpegniSemaforo"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="Spegni"
+                        android:textSize="11sp"
+                        android:backgroundTint="#5E2B2B"
+                        android:textColor="#E0E0E0"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

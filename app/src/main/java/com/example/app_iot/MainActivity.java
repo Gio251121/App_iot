@@ -12,6 +12,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.cardview.widget.CardView;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.config.Configuration;
+import android.preference.PreferenceManager;
+import android.content.Context;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -23,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
 
     private MqttManager mqttManager;
     private TextView tvConnStatus;
+
+    private MapView mapViewIncrocio;
     private Button btnRiprova;
     //private Button btnProva;
     private CardView cardRossa, cardGialla, cardVerde;
@@ -46,6 +55,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        Context ctx = getApplicationContext();
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        Configuration.getInstance().setUserAgentValue(getPackageName());
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -88,6 +102,35 @@ public class MainActivity extends AppCompatActivity {
 
         pannelloControllo = findViewById(R.id.pannelloControllo);
 
+        mapViewIncrocio = findViewById(R.id.mapViewIncrocio);
+        mapViewIncrocio.setBuiltInZoomControls(false); // Disattiva i tasti +/- grafici per mantenere pulito il layout
+        mapViewIncrocio.setMultiTouchControls(true);   // Permette lo zoom tramite pinch-to-zoom delle dita
+
+
+        // Recupero le coordinate salvate nelle SharedPreferences
+        float latSemaforo = prefs.getFloat("lat_semaforo", 0.0f);
+        float lonSemaforo = prefs.getFloat("lon_semaforo", 0.0f);
+
+        // Se le coordinate estratte sono valide, configura la vista geografica
+        if (latSemaforo != 0.0f && lonSemaforo != 0.0f) {
+            GeoPoint posizioneSemaforo = new GeoPoint(latSemaforo, lonSemaforo);
+
+            // Configurazione dell'inquadratura iniziale (Zoom 17.0 mappa l'incrocio in dettaglio)
+            mapViewIncrocio.getController().setZoom(17.0);
+            mapViewIncrocio.getController().setCenter(posizioneSemaforo);
+
+            // Generazione del Marker descrittivo dell'impianto controllato
+            Marker marker = new Marker(mapViewIncrocio);
+            marker.setPosition(posizioneSemaforo);
+            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            marker.setTitle(nomeIncrocioSalvato);
+            marker.setSnippet("Seriale: " + codiceSemaforoSalvato);
+
+            // Inserimento del marker nell'overlay della mappa
+            mapViewIncrocio.getOverlays().add(marker);
+            mapViewIncrocio.invalidate(); // Forza il refresh asincrono della UI grafica
+        }
+
 
 
         // Controllo permessi di visualizzazione (RBAC)
@@ -97,14 +140,11 @@ public class MainActivity extends AppCompatActivity {
             pannelloControllo.setVisibility(View.GONE); // Nasconde comandi per utente standard
         }
 
-        topicDati = "esp32/dati";
+        topicDati = "esp/dati";
         topicLuce = "esp/luce"; // Topic dedicato per evitare overlap tra incroci
 
         tvCodiceSeriale.setText("Seriale: " + codiceSemaforoSalvato);
         tvNomeIncrocio.setText(nomeIncrocioSalvato);
-
-        // 3. Imposto il topic da cui leggere i dati (es: esp32/dati/ESP32-SEM01)
-        topicDati = "esp32/dati/" + codiceSemaforoSalvato;
 
         // 4. Azioni dei bottoni
         btnAccendiSemaforo.setOnClickListener(v -> inviaComando("acceso"));
@@ -150,8 +190,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // Check condizioni critiche
                     if (terremotoRilevato) allerte.append("⚠️ TERREMOTO/URTO RILEVATO!\n");
-                    if (piove) allerte.append("⚠️ PIOGGIA IN CORSO\n");
-                    if (luminosita < 20) allerte.append("⚠️ SCARSA VISIBILITÀ (Notte/Nebbia)\n");
+                    if (piove) allerte.append("⚠️ Strada Bagnata\n");
+                    if (luminosita < 20) allerte.append("⚠️ SCARSA VISIBILITÀ\n");
 
                     // Verifica soglie temperatura (se il sensore non restituisce null)
                     if (!tempStr.equals("null") && !tempStr.isEmpty()) {
@@ -193,14 +233,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        mqttManager.setMessageCallback((topic, message) -> {
-            if (topic.equals(topicDati)) {
-                // ... parsing JSON dati sensori esistente ...
-            } else if (topic.equals(topicLuce)) {
-                // Aggiornamento thread-safe della UI in base al payload MQTT
-                runOnUiThread(() -> aggiornaSemaforoUI(message.trim().toLowerCase()));
-            }
-        });
 
         mqttManager.setConnectionCallback(new MqttManager.ConnectionCallback() {
             @Override
@@ -279,9 +311,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Risveglia la mappa per scaricare i nuovi settori
+        if (mapViewIncrocio != null) {
+            mapViewIncrocio.onResume();
+        }
+
         if (mqttManager != null) {
             mqttManager.disconnect();
             connetti();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Congela la mappa per risparmiare risorse quando esci dall'app
+        if (mapViewIncrocio != null) {
+            mapViewIncrocio.onPause();
         }
     }
 

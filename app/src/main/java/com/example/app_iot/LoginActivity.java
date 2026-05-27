@@ -102,21 +102,24 @@ public class LoginActivity extends AppCompatActivity {
 
                         if (stato == 1) {
                             String nomeIncrocio = json.optString("nome_incrocio", "Semaforo Sconosciuto");
-
-                            // Estrazione ruolo per la gestione permessi in MainActivity
                             String ruolo = json.optString("ruolo", "utente");
 
-                            // Salvataggio credenziali e ruolo in SharedPreferences
+                            // Estrazione dei dati geografici dal JSON di risposta
+                            double lat = json.optDouble("latitudine", 0.0);
+                            double lon = json.optDouble("longitudine", 0.0);
+
+                            // Scrittura dei parametri all'interno del file delle preferenze
                             SharedPreferences prefs2 = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                             prefs2.edit()
                                     .putBoolean("isLogged", true)
                                     .putString("codice_seriale_salvato", codiceSemaforo)
                                     .putString("nome_incrocio_salvato", nomeIncrocio)
                                     .putString("ruolo_utente", ruolo)
+                                    .putFloat("lat_semaforo", (float) lat) // Memorizzazione latitudine
+                                    .putFloat("lon_semaforo", (float) lon) // Memorizzazione longitudine
                                     .apply();
 
                             Toast.makeText(LoginActivity.this, "Connesso come: " + ruolo, Toast.LENGTH_SHORT).show();
-
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {

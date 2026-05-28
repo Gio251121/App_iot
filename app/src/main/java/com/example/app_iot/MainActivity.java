@@ -165,60 +165,47 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     JSONObject jsonObject = new JSONObject(message);
 
-                    // Parsing dati ambientali (usiamo optString per gestire in sicurezza i valori "null")
+                    // Lettura dei dati ambientali. Luminosità ora è un booleano.
                     String tempStr = jsonObject.optString("temperatura", "null");
                     String umidStr = jsonObject.optString("umidita", "null");
                     String traffico = jsonObject.optString("traffico", "N/D");
-                    int luminosita = jsonObject.optInt("luminosita", 0);
+                    boolean luminositaBuona = jsonObject.optBoolean("luminosita", true); // true = c'è luce, false = buio
                     boolean piove = jsonObject.optBoolean("acqua", false);
 
-                    // Analisi dati inerziali per rilevamento terremoto/urti
-                    boolean terremotoRilevato = false;
-                    JSONObject acc = jsonObject.optJSONObject("accelerometro");
-                    if (acc != null) {
-                        double ax = acc.optDouble("x", 0);
-                        double ay = acc.optDouble("y", 0);
-                        double az = acc.optDouble("z", 0);
-                        // Calcolo vettoriale semplificato. Una soglia > 1.5g indica un movimento anomalo del palo
-                        if (Math.abs(ax) > 1.5 || Math.abs(ay) > 1.5 || Math.abs(az) > 1.5) {
-                            terremotoRilevato = true;
-                        }
-                    }
-
-                    // Inizializzazione buffer per le stringhe di allerta
+                    // Inizializzazione del buffer per gli avvisi a schermo
                     StringBuilder allerte = new StringBuilder();
 
-                    // Check condizioni critiche
-                    if (terremotoRilevato) allerte.append("⚠️ TERREMOTO/URTO RILEVATO!\n");
-                    if (piove) allerte.append("⚠️ Strada Bagnata\n");
-                    if (luminosita < 20) allerte.append("⚠️ SCARSA VISIBILITÀ\n");
+                    // Controllo degli stati critici per attivare le allerte
+                    if (piove) allerte.append("⚠ Strada Bagnata\n");
+                    if (!luminositaBuona) allerte.append("⚠ SCARSA VISIBILITÀ\n");
 
-                    // Verifica soglie temperatura (se il sensore non restituisce null)
+                    // Verifica dei limiti di temperatura per ghiaccio o surriscaldamento
                     if (!tempStr.equals("null") && !tempStr.isEmpty()) {
                         try {
                             double temp = Double.parseDouble(tempStr);
-                            if (temp > 40) allerte.append("⚠️ CALDO ESTREMO\n");
-                            if (temp < 3) allerte.append("⚠️ RISCHIO GHIACCIO\n");
+                            if (temp > 40) allerte.append("⚠ CALDO ESTREMO\n");
+                            if (temp < 3) allerte.append("⚠ RISCHIO GHIACCIO\n");
                         } catch (NumberFormatException e) {
-                            // Ignora parsing errato
+                            // Errore di formato ignorato in modo silente
                         }
                     }
 
-                    // Esecuzione sul main thread per aggiornare la UI
-                    boolean finalTerremotoRilevato = terremotoRilevato;
+                    // Aggiornamento grafico sul thread principale
                     runOnUiThread(() -> {
-                        // Aggiornamento campi testo UI
+                        // Inserimento dei valori nelle TextView
                         tvTemperatura.setText(tempStr.equals("null") ? "--°C" : tempStr + "°C");
                         tvUmidita.setText(umidStr.equals("null") ? "--%" : umidStr + "%");
-                        tvLuminosita.setText(luminosita + "%");
                         tvTraffico.setText(traffico.toUpperCase());
 
-                        // Gestione visibilità box allerte
+                        // Conversione del booleano in una stringa leggibile per l'utente
+                        tvLuminosita.setText(luminositaBuona ? "BUONA" : "SCARSA");
+
+                        // Gestione della visibilità del pannello rosso delle allerte
                         if (allerte.length() > 0) {
                             tvAllerte.setVisibility(View.VISIBLE);
                             tvAllerte.setText(allerte.toString().trim());
                         } else {
-                            tvAllerte.setVisibility(View.GONE); // Nascondi se non ci sono problemi
+                            tvAllerte.setVisibility(View.GONE);
                         }
                     });
 
@@ -226,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             } else if (topic.equals(topicLuce)) {
-                // Gestione indipendente del colore semaforo (già implementata)
+                // Modifica dinamica del colore acceso sul semaforo in base al payload MQTT
                 runOnUiThread(() -> aggiornaSemaforoUI(message.trim().toLowerCase()));
             }
         });
